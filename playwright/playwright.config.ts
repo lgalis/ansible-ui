@@ -16,6 +16,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env'), override: true });
 // Use verbose configuration by default for better debugging
 const isCI = !!process.env.CI;
 const jobTimeoutMinutes = Number(process.env.TIMEOUT_MINUTES) || 120;
+const clipboardPermissions = ['clipboard-read', 'clipboard-write'];
 const config: PlaywrightTestConfig = {
   testDir: '.',
   fullyParallel: false,
@@ -69,7 +70,7 @@ const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'live chromium',
-      use: { ...devices['Desktop Chrome'], permissions: ['clipboard-read', 'clipboard-write'] },
+      use: { ...devices['Desktop Chrome'], permissions: clipboardPermissions },
       dependencies: ['coverage setup'],
 
       // Commenting this out for now to see if it is really needed
@@ -92,7 +93,7 @@ const config: PlaywrightTestConfig = {
     },
     {
       name: 'live firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'], permissions: clipboardPermissions },
       grepInvert: [
         /@upgrade/, // We should not run upgrade tests in this project
       ],
@@ -107,7 +108,7 @@ const config: PlaywrightTestConfig = {
     },
     {
       name: 'live webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { ...devices['Desktop Safari'], permissions: clipboardPermissions },
       grepInvert: [
         /@upgrade/, // We should not run upgrade tests in this project
       ],
@@ -123,7 +124,7 @@ const config: PlaywrightTestConfig = {
     },
     {
       name: 'live upgrade',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], permissions: clipboardPermissions },
       fullyParallel: false,
       grep: [
         /@upgrade/, // We should only wan tot run upgrade tests
