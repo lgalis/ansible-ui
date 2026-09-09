@@ -5,8 +5,8 @@ import { Locator, Page } from '@playwright/test';
  *
  * Monaco 0.56+ uses a `native-edit-context` element that is NOT a standard
  * `<textarea>` or `[contenteditable]`. Playwright's `.fill()` only works on
- * `<input>`, `<textarea>`, or `[contenteditable]` elements, so we use the
- * keyboard to select-all and type instead.
+ * `<input>`, `<textarea>`, or `[contenteditable]` elements, so we focus the
+ * editor surface and replace its content via the keyboard.
  *
  * @param page  - The Playwright Page object
  * @param text  - The text to enter into the editor
@@ -15,7 +15,22 @@ import { Locator, Page } from '@playwright/test';
  */
 export async function fillMonacoEditor(page: Page, text: string, editorLocator?: Locator) {
   const editor = editorLocator ?? page.getByRole('textbox', { name: 'Editor content' });
-  await editor.click({ force: true });
-  await page.keyboard.press('Control+a');
-  await page.keyboard.type(text);
+  const monacoEditor = editor.locator('xpath=ancestor::div[contains(@class, "monaco-editor")]');
+  const editableSurface = monacoEditor.locator('.view-lines');
+
+  if ((await editableSurface.count()) > 0) {
+    await editableSurface.first().click();
+  } else {
+    await editor.click({ force: true });
+  }
+
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press('Backspace');
+
+  if (text) {
+    await page.evaluate(async (content) => {
+      await navigator.clipboard.writeText(content);
+    }, text);
+    await page.keyboard.press('ControlOrMeta+v');
+  }
 }
