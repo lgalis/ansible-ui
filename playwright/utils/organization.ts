@@ -8,7 +8,7 @@ import { navigateTo } from '../commands/navigateTo';
 import { selectTableRow } from '../commands/selectTableRow';
 
 const TERMINAL_STATUSES = new Set(['successful', 'failed', 'error', 'canceled']);
-const ORGANIZATION_PROPAGATION_MAX_ATTEMPTS = 30;
+const ORGANIZATION_PROPAGATION_MAX_ATTEMPTS = 90;
 
 type EdaOrganizationLookup = {
   available: boolean;
@@ -35,6 +35,12 @@ async function lookupEdaOrganization(
 
   if (response.status() === 404) {
     return { available: false, ready: false };
+  }
+
+  // EDA can briefly return 5xx while services restart or during propagation.
+  // Treat as "not ready yet" so waitForOrganizationPropagation keeps polling.
+  if (response.status() >= 500) {
+    return { available: true, ready: false };
   }
 
   if (!response.ok()) {
